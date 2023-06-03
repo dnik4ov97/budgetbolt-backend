@@ -3,8 +3,7 @@ import FluentKit
 
 func routes(_ app: Application) throws {
     
-    
-    let clientName = "Niki Finance"
+    let clientName = "BudgetBolt"
     let clientId = ""
     let secret = ""
 
@@ -123,74 +122,46 @@ func routes(_ app: Application) throws {
 //                .filter(\.$email == email.address)
 //                .update()
 //            
-//            for access in accessAccounts {
-//                repeat {
-//                    // Calling Transaction/Sync from Plaid
-//                    let cursor = try await findAccess(req, email).first(where: {$0.access_token == access.access_token})?.cursor ?? ""
-//                    print("DBcursor: \(cursor)")
-//                    let requestFields = ["client_id": clientId, "secret": secret, "access_token" : access.access_token, "cursor": cursor]
-//                    let response = try await req.client.post("https://development.plaid.com/transactions/sync") {req in
-//                        try req.content.encode(requestFields)
-//                    }
-//                    transactionSync = try response.content.decode(Transactions.self)
-//
-//                    // Update Transaction in MongoDB --------------------------------------------------------------
-//                    try await updateTransactions(trans: transactionSync, req: req, email: email)
-//
-//                    // Updating Finding and Updating the Cursor
-//                    var accesses = try await Users.query(on: req.db)
-//                        .filter(\.$email == email.address)
-//                        .field(\.$access)
-//                        .first()?.access ?? [Access]()
-//                    accesses.removeAll(where: {$0.access_token == access.access_token})
-//                    accesses.append(Access(access_token: access.access_token, cursor: transactionSync.next_cursor, institution_id: access.institution_id, name: access.name))
-//
-//                    try await Users.query(on: req.db)
-//                        .set(\.$access, to: accesses)
-//                        .filter(\.$email == email.address)
-//                        .update()
-//
-//
-//                } while transactionSync.has_more
-//            }
+            for access in accessAccounts {
+                repeat {
+                    // Calling Transaction/Sync from Plaid
+                    let cursor = try await findAccess(req, email).first(where: {$0.access_token == access.access_token})?.cursor ?? ""
+                    print("DBcursor: \(cursor)")
+                    let requestFields = ["client_id": clientId, "secret": secret, "access_token" : access.access_token, "cursor": cursor]
+                    let response = try await req.client.post("https://development.plaid.com/transactions/sync") {req in
+                        try req.content.encode(requestFields)
+                    }
+                    transactionSync = try response.content.decode(Transactions.self)
+
+                    // Update Transaction in MongoDB --------------------------------------------------------------
+                    try await updateTransactions(trans: transactionSync, req: req, email: email)
+
+                    // Updating Finding and Updating the Cursor
+                    var accesses = try await Users.query(on: req.db)
+                        .filter(\.$email == email.address)
+                        .field(\.$access)
+                        .first()?.access ?? [Access]()
+                    accesses.removeAll(where: {$0.access_token == access.access_token})
+                    accesses.append(Access(access_token: access.access_token, cursor: transactionSync.next_cursor, institution_id: access.institution_id, name: access.name))
+
+                    try await Users.query(on: req.db)
+                        .set(\.$access, to: accesses)
+                        .filter(\.$email == email.address)
+                        .update()
+
+
+                } while transactionSync.has_more
+            }
             let dbTransaction = try await Users.query(on: req.db)
                 .filter(\.$email == email.address)
                 .field(\.$transactions)
                 .first()?.transactions
-            
-//            let dbTransaction = try await Users.query(on: req.db)
-//                .filter(\.$email == email.address)
-//                .field(\.$transactions)
-//                .first()?.transactions.uniqued(on: {trans in trans.category_id})
-            
-//            var categories = Categories(categories: [Categories.Category]())
-//
-//            do {
-//                let emptyJSON : [String: String] = [:]
-//                let response = try await req.client.post("https://development.plaid.com/categories/get") { req in
-//                    try req.content.encode(emptyJSON)
-//                }
-////                print(response)
-//                categories = try response.content.decode(Categories.self)
-////                print(categories.categories)
-////                return categories.categories
-//            } catch {
-//                print(error)
-////                return [Categories.Category]()
-//            }
-            
-//            for trans in dbTransaction! {
-//                if categories.categories.contains(where: { $0.category_id == trans.category_id}) {
-//                    output.append(Cat(cat_id: trans.category_id, cats: categories.categories.first(where: {$0.category_id == trans.category_id})!.hierarchy, transaction: trans.name))
-//                }
-//            }
         
             return dbTransaction!
-//            return output
+            
         } catch {
             print(error)
             return(transactionSync.added)
-//            return output
         }
     }
     
@@ -226,33 +197,33 @@ func routes(_ app: Application) throws {
             let email = try req.content.decode(Email.self)
             let accessAccounts = try await findAccess(req, email)
 
-//            for access in accessAccounts {
-//                print("access: \(access)")
-//                do {
-//                    let response = try await req.client.post("https://development.plaid.com/accounts/balance/get") { req in
-//                        if access.institution_id == "ins_128026" {
-//                            try req.content.encode(
-//                                CapitalOneBalanceParam(client_id: clientId, secret: secret, access_token: access.access_token, options: CapitalOneBalanceParam.Option(min_last_updated_datetime: "2023-05-10T20:52:54Z"))
-//                            )
-//                        } else {
-//                            try req.content.encode(
-//                                ["client_id": clientId, "secret": secret, "access_token" : access.access_token]
-//                            )
-//                        }
-//                    }
-//                    accounts = try response.content.decode(Accounts.self)
-//
-//                    for account in accounts.accounts {
-//                        var newBankName = getNewBankName(accountName: account.name, officialAccountName: account.official_name, institutionName: access.name)
-//                        updatedAccounts.append(NewAccount(account_id: account.account_id, balances: account.balances, mask: account.mask, name: newBankName, subtype: account.subtype, type: account.type, institutionName: access.name))
-//                    }
-//
-//                } catch {
-//                    print("Error: \(error)")
-//                }
-//                // Update Accounts in MongoDB
-//                try await updateAccounts(accounts: updatedAccounts, req: req, email: email)
-//            }
+            for access in accessAccounts {
+                print("access: \(access)")
+                do {
+                    let response = try await req.client.post("https://development.plaid.com/accounts/balance/get") { req in
+                        if access.institution_id == "ins_128026" {
+                            try req.content.encode(
+                                CapitalOneBalanceParam(client_id: clientId, secret: secret, access_token: access.access_token, options: CapitalOneBalanceParam.Option(min_last_updated_datetime: "2023-05-10T20:52:54Z"))
+                            )
+                        } else {
+                            try req.content.encode(
+                                ["client_id": clientId, "secret": secret, "access_token" : access.access_token]
+                            )
+                        }
+                    }
+                    accounts = try response.content.decode(Accounts.self)
+
+                    for account in accounts.accounts {
+                        var newBankName = getNewBankName(accountName: account.name, officialAccountName: account.official_name, institutionName: access.name)
+                        updatedAccounts.append(NewAccount(account_id: account.account_id, balances: account.balances, mask: account.mask, name: newBankName, subtype: account.subtype, type: account.type, institutionName: access.name))
+                    }
+
+                } catch {
+                    print("Error: \(error)")
+                }
+                // Update Accounts in MongoDB
+                try await updateAccounts(accounts: updatedAccounts, req: req, email: email)
+            }
             let dbAccounts = try await Users.query(on: req.db)
                 .filter(\.$email == email.address)
                 .field(\.$accounts)
@@ -366,7 +337,6 @@ struct Email: Content {
 
 struct Accounts: Content {
     var accounts: [Account]
-//    var item: Item
     
     struct Account: Content {
         var account_id: String
@@ -384,10 +354,6 @@ struct Accounts: Content {
             var limit: Double?
         }
     }
-    
-//    struct Item: Content {
-//        var institution_id: String
-//    }
 }
     
 struct NewAccount: Content {
