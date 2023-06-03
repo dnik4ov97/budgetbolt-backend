@@ -5,14 +5,9 @@ func routes(_ app: Application) throws {
     
     
     let clientName = "Niki Finance"
-    let clientId = "63601ef71a807200137b674a"
-    
-//    let secret = "ff636de5c3dfcf4452cd512534eb6a"
-//    let environment = "https://sandbox.plaid.com"
-    let secret = "2dc5ba85eb536192413ea211f8d795"
-//    let environment = "https://development.plaid.com"
-//    let secret = "c2fe5a1ec1180ebd49d19806ac56dd"
-//    let environment = "https://production.plaid.com"
+    let clientId = ""
+    let secret = ""
+
     
     /*
      -------------------------------------------------------------------------------------------------------------------------------------------------------------------
